@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>{{ board.title }}</h1>
+  <p>{{ board.description }}</p>
+
+  <p>
+    {% if board.is_private %}
+      Private
+    {% else %}
+      Public
+    {% endif %}
+  </p>
+
+  <hr>
+
+  <h2>Saved Posts</h2>
+
+  {% if board_saved_items %}
+    {% for item in board_saved_items %}
+      <div class="card">
+        <h3>
+          <a href="{{ url_for('post_detail', post_id=item.post._id) }}">{{ item.post.title }}</a>
+        </h3>
+        <p>{{ item.post.content }}</p>
+        <small>By {{ item.post.username }}</small>
+
+        {% if item.note %}
+          <p><strong>Why you saved it:</strong> {{ item.note }}</p>
+        {% endif %}
+      </div>
+      <hr>
+    {% endfor %}
+  {% else %}
+    <p>No saved posts yet.</p>
+  {% endif %}
+{% endblock %}

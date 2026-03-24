@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Create Board</h1>
+
+  <form method="POST">
+    <label>Board Title</label>
+    <input type="text" name="title" required>
+
+    <label>Description</label>
+    <textarea name="description" rows="4" required></textarea>
+
+    <label>
+      <input type="checkbox" name="is_private">
+      Private Board
+    </label>
+
+    <br><br>
+    <button type="submit">Create Board</button>
+  </form>
+{% endblock %}

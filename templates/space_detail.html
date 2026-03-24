@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>{{ space.name }}</h1>
+  <p>{{ space.description }}</p>
+
+  {% if session.get('user_id') %}
+    <p>
+      <a href="{{ url_for('create_post', space_id=space._id) }}">Create Post</a>
+    </p>
+  {% else %}
+    <p><a href="{{ url_for('login') }}">Log in</a> to create a post.</p>
+  {% endif %}
+
+  <hr>
+
+  <h2>Posts</h2>
+
+  {% if space_posts %}
+    {% for post in space_posts %}
+      <div class="card">
+        <h3>
+          <a href="{{ url_for('post_detail', post_id=post._id) }}">{{ post.title }}</a>
+        </h3>
+        <p>{{ post.content }}</p>
+        <small>By {{ post.username }}</small>
+      </div>
+      <hr>
+    {% endfor %}
+  {% else %}
+    <p>No posts yet.</p>
+  {% endif %}
+{% endblock %}

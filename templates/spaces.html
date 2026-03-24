@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Fandom Spaces</h1>
+
+  {% for space in spaces %}
+    <div class="card">
+      <h2>
+        <a href="{{ url_for('space_detail', space_id=space._id) }}">
+          {{ space.name }}
+        </a>
+      </h2>
+      <p>{{ space.description }}</p>
+    </div>
+    <hr>
+  {% endfor %}
+{% endblock %}

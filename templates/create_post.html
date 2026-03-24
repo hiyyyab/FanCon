@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Create Post in {{ space.name }}</h1>
+
+  <form method="POST">
+    <label>Title</label>
+    <input type="text" name="title" required>
+
+    <label>Content</label>
+    <textarea name="content" rows="6" required></textarea>
+
+    <label>Image URL (optional)</label>
+    <input type="text" name="image_url">
+
+    <button type="submit">Post</button>
+  </form>
+{% endblock %}

@@ -1,0 +1,113 @@
+/* Base layout */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px;
+  background: #faf7fb;
+  color: #222;
+  line-height: 1.6;
+}
+
+/* Navigation */
+nav {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  margin-bottom: 28px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e6d9ef;
+}
+
+nav a {
+  text-decoration: none;
+  color: #6a2c91;
+  font-weight: 500;
+}
+
+nav a:hover {
+  text-decoration: underline;
+}
+
+nav span {
+  margin-left: auto;
+  font-weight: 500;
+  color: #444;
+}
+
+/* Headings */
+h1 {
+  margin-bottom: 8px;
+}
+
+h2 {
+  margin-bottom: 6px;
+}
+
+/* Links */
+a {
+  color: #6a2c91;
+}
+
+a:hover {
+  opacity: 0.85;
+}
+
+/* Cards */
+.card {
+  background: white;
+  border: 1px solid #eadff2;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 18px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+}
+
+/* Forms */
+form {
+  margin-top: 16px;
+}
+
+label {
+  font-weight: 500;
+}
+
+input, textarea, select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 6px;
+  margin-bottom: 14px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+/* Buttons */
+button {
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: none;
+  background: #6a2c91;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+/* Flash messages */
+.flash {
+  background: #f3e7ff;
+  border: 1px solid #d6b7ee;
+  padding: 10px 14px;
+  border-radius: 10px;
+  margin-bottom: 18px;
+}
+
+/* Small text */
+small {
+  color: #666;
+}

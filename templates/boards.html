@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Your Boards</h1>
+
+  <p>
+    <a href="{{ url_for('create_board') }}">Create New Board</a>
+  </p>
+
+  {% if boards %}
+    {% for board in boards %}
+      <div class="card">
+        <h2>
+          <a href="{{ url_for('board_detail', board_id=board._id) }}">{{ board.title }}</a>
+        </h2>
+        <p>{{ board.description }}</p>
+        <p>
+          {% if board.is_private %}
+            Private
+          {% else %}
+            Public
+          {% endif %}
+        </p>
+      </div>
+      <hr>
+    {% endfor %}
+  {% else %}
+    <p>You have no boards yet.</p>
+  {% endif %}
+{% endblock %}

@@ -1,8 +1,10 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h1>Welcome to FanCon</h1>
-  <p>Your fandom archive + discussion space.</p>
+  <div class="welcome-banner">
+    <h1>Welcome to fancon</h1>
+    <p>Your fandom archive + discussion space.</p>
+  </div>
 
   {% if session.get('user_id') %}
     <hr>

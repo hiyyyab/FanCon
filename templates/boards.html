@@ -21,6 +21,9 @@
             Public
           {% endif %}
         </p>
+        <form method="POST" action="{{ url_for('delete_board', board_id=board._id) }}">
+          <button type="submit" onclick="return confirm('Delete this board?')">Delete</button>
+        </form>
       </div>
       <hr>
     {% endfor %}

@@ -5,6 +5,9 @@
   <p>{{ space.description }}</p>
 
   {% if session.get('user_id') %}
+    <form method="POST" action="{{ url_for('follow_space', space_id=space._id) }}">
+      <button type="submit">{% if is_following %}Unfollow{% else %}Follow{% endif %}</button>
+    </form>
     <p>
       <a href="{{ url_for('create_post', space_id=space._id) }}">Create Post</a>
     </p>

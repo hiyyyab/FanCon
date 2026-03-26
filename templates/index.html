@@ -3,4 +3,25 @@
 {% block content %}
   <h1>Welcome to FanCon</h1>
   <p>Your fandom archive + discussion space.</p>
+
+  {% if session.get('user_id') %}
+    <hr>
+    <h2>Your Feed</h2>
+
+    {% if feed_posts %}
+      {% for post in feed_posts %}
+        <div class="card">
+          <small>{{ post.space_name }}</small>
+          <h3><a href="{{ url_for('post_detail', post_id=post._id) }}">{{ post.title }}</a></h3>
+          <p>{{ post.content }}</p>
+          <small>By {{ post.username }}</small>
+        </div>
+        <hr>
+      {% endfor %}
+    {% elif followed_space_ids %}
+      <p>No posts yet in your followed spaces.</p>
+    {% else %}
+      <p>Follow some <a href="{{ url_for('spaces_page') }}">spaces</a> to see posts here.</p>
+    {% endif %}
+  {% endif %}
 {% endblock %}

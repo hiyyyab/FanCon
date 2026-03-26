@@ -10,9 +10,56 @@
     <label>Content</label>
     <textarea name="content" rows="6" required></textarea>
 
-    <label>Image URL (optional)</label>
-    <input type="text" name="image_url">
+    <label>Image or GIF URL (optional)</label>
+    <input type="text" name="image_url" id="image_url" placeholder="Paste a URL or pick a GIF below">
+    <small>For images: <a href="https://images.google.com" target="_blank">Google Images</a> — right-click → "Copy image address"</small>
 
+    <br><br>
+    <div id="image_preview"></div>
+
+    <div>
+      <input type="text" id="gif_search" placeholder="Search GIFs...">
+      <button type="button" onclick="searchGifs('image_url', 'post_gif_results')">Search</button>
+    </div>
+    <div id="post_gif_results" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;"></div>
+
+    <br>
     <button type="submit">Post</button>
   </form>
+
+  <script>
+    const input = document.getElementById('image_url');
+    const preview = document.getElementById('image_preview');
+    input.addEventListener('input', () => {
+      const url = input.value.trim();
+      preview.innerHTML = url ? `<img src="${url}" alt="preview" width="300">` : '';
+    });
+
+    function searchGifs(targetInputId, resultsId) {
+      const query = document.getElementById('gif_search').value.trim();
+      if (!query) return;
+      fetch(`/giphy/search?q=${encodeURIComponent(query)}`)
+        .then(r => r.json())
+        .then(gifs => {
+          const container = document.getElementById(resultsId);
+          container.innerHTML = '';
+          gifs.forEach(gif => {
+            const img = document.createElement('img');
+            img.src = gif.url;
+            img.width = 120;
+            img.style.cursor = 'pointer';
+            img.onclick = () => {
+              document.getElementById(targetInputId).value = gif.url;
+              document.getElementById(targetInputId).dispatchEvent(new Event('input'));
+              container.innerHTML = '';
+            };
+            container.appendChild(img);
+          });
+        });
+    }
+
+    document.getElementById('gif_search').addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); searchGifs('image_url', 'post_gif_results'); }
+    });
+  </script>
 {% endblock %}

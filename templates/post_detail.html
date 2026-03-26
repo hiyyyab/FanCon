@@ -5,6 +5,12 @@
   <p>{{ post.content }}</p>
   <small>By {{ post.username }}</small>
 
+  {% if session.get('user_id') == post.user_id|string %}
+    <form method="POST" action="{{ url_for('delete_post', post_id=post._id) }}">
+      <button type="submit" onclick="return confirm('Delete this post?')">Delete Post</button>
+    </form>
+  {% endif %}
+
   {% if post.image_url %}
     <p><img src="{{ post.image_url }}" alt="Post image" width="300"></p>
   {% endif %}
@@ -40,9 +46,58 @@
   {% if session.get('user_id') %}
     <form method="POST">
       <label>Add Comment</label>
-      <textarea name="content" rows="4" required></textarea>
+      <textarea name="content" rows="4"></textarea>
+
+      <label>Image or GIF URL (optional)</label>
+      <input type="text" name="image_url" id="comment_image_url" placeholder="Paste a URL or pick a GIF below">
+      <small>For images: <a href="https://images.google.com" target="_blank">Google Images</a> — right-click → "Copy image address"</small>
+      <div id="comment_preview"></div>
+
+      <div>
+        <input type="text" id="comment_gif_search" placeholder="Search GIFs...">
+        <button type="button" onclick="searchGifs('comment_image_url', 'comment_gif_results')">Search</button>
+      </div>
+      <div id="comment_gif_results" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;"></div>
+
       <button type="submit">Comment</button>
     </form>
+
+    <script>
+      const commentInput = document.getElementById('comment_image_url');
+      const commentPreview = document.getElementById('comment_preview');
+      commentInput.addEventListener('input', () => {
+        const url = commentInput.value.trim();
+        commentPreview.innerHTML = url ? `<img src="${url}" alt="preview" width="200">` : '';
+      });
+
+      function searchGifs(targetInputId, resultsId) {
+        const searchId = targetInputId === 'comment_image_url' ? 'comment_gif_search' : 'gif_search';
+        const query = document.getElementById(searchId).value.trim();
+        if (!query) return;
+        fetch(`/giphy/search?q=${encodeURIComponent(query)}`)
+          .then(r => r.json())
+          .then(gifs => {
+            const container = document.getElementById(resultsId);
+            container.innerHTML = '';
+            gifs.forEach(gif => {
+              const img = document.createElement('img');
+              img.src = gif.url;
+              img.width = 120;
+              img.style.cursor = 'pointer';
+              img.onclick = () => {
+                document.getElementById(targetInputId).value = gif.url;
+                document.getElementById(targetInputId).dispatchEvent(new Event('input'));
+                container.innerHTML = '';
+              };
+              container.appendChild(img);
+            });
+          });
+      }
+
+      document.getElementById('comment_gif_search').addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); searchGifs('comment_image_url', 'comment_gif_results'); }
+      });
+    </script>
   {% else %}
     <p><a href="{{ url_for('login') }}">Log in</a> to comment.</p>
   {% endif %}
@@ -54,6 +109,14 @@
       <div class="card">
         <strong>{{ comment.username }}</strong>
         <p>{{ comment.content }}</p>
+        {% if comment.image_url %}
+          <img src="{{ comment.image_url }}" alt="comment image" width="200">
+        {% endif %}
+        {% if session.get('user_id') == comment.user_id|string %}
+          <form method="POST" action="{{ url_for('delete_comment', comment_id=comment._id) }}">
+            <button type="submit" onclick="return confirm('Delete this comment?')">Delete</button>
+          </form>
+        {% endif %}
       </div>
       <hr>
     {% endfor %}

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 from dotenv import load_dotenv
@@ -6,6 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 import certifi
 import os
+import requests as http_requests
 
 load_dotenv()
 
@@ -21,6 +22,7 @@ posts_collection = db["posts"]
 comments_collection = db["comments"]
 boards_collection = db["boards"]
 saved_posts_collection = db["saved_posts"]
+space_follows_collection = db["space_follows"]
 
 
 def seed_spaces():
@@ -43,7 +45,26 @@ def seed_spaces():
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    feed_posts = []
+    followed_space_ids = []
+
+    if "user_id" in session:
+        follows = space_follows_collection.find({"user_id": ObjectId(session["user_id"])})
+        followed_space_ids = [f["space_id"] for f in follows]
+
+        if followed_space_ids:
+            feed_posts = list(
+                posts_collection.find({"space_id": {"$in": followed_space_ids}}).sort("created_at", -1).limit(30)
+            )
+
+            space_map = {
+                s["_id"]: s["name"]
+                for s in spaces_collection.find({"_id": {"$in": followed_space_ids}})
+            }
+            for post in feed_posts:
+                post["space_name"] = space_map.get(post["space_id"], "")
+
+    return render_template("index.html", feed_posts=feed_posts, followed_space_ids=followed_space_ids)
 
 
 @app.route("/signup", methods=["GET", "POST"])
@@ -146,7 +167,36 @@ def space_detail(space_id):
         posts_collection.find({"space_id": ObjectId(space_id)}).sort("created_at", -1)
     )
 
-    return render_template("space_detail.html", space=space, space_posts=space_posts)
+    is_following = False
+    if "user_id" in session:
+        is_following = space_follows_collection.find_one({
+            "user_id": ObjectId(session["user_id"]),
+            "space_id": ObjectId(space_id)
+        }) is not None
+
+    return render_template("space_detail.html", space=space, space_posts=space_posts, is_following=is_following)
+
+
+@app.route("/spaces/<space_id>/follow", methods=["POST"])
+def follow_space(space_id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    existing = space_follows_collection.find_one({
+        "user_id": ObjectId(session["user_id"]),
+        "space_id": ObjectId(space_id)
+    })
+
+    if existing:
+        space_follows_collection.delete_one({"_id": existing["_id"]})
+    else:
+        space_follows_collection.insert_one({
+            "user_id": ObjectId(session["user_id"]),
+            "space_id": ObjectId(space_id),
+            "created_at": datetime.utcnow()
+        })
+
+    return redirect(url_for("space_detail", space_id=space_id))
 
 
 @app.route("/spaces/<space_id>/posts/create", methods=["GET", "POST"])
@@ -190,12 +240,18 @@ def post_detail(post_id):
             return redirect(url_for("login"))
 
         content = request.form["content"].strip()
+        image_url = request.form.get("image_url", "").strip()
+
+        if not content and not image_url:
+            flash("Comment must have text or an image.")
+            return redirect(url_for("post_detail", post_id=post_id))
 
         comment = {
             "post_id": ObjectId(post_id),
             "user_id": ObjectId(session["user_id"]),
             "username": session["username"],
             "content": content,
+            "image_url": image_url,
             "created_at": datetime.utcnow()
         }
 
@@ -332,8 +388,104 @@ def board_detail(board_id):
         board_saved_items=board_saved_items
     )
 
+@app.route("/giphy/search")
+def giphy_search():
+    query = request.args.get("q", "")
+    api_key = os.getenv("GIPHY_API_KEY")
+    response = http_requests.get(
+        "https://api.giphy.com/v1/gifs/search",
+        params={"api_key": api_key, "q": query, "limit": 12, "rating": "pg-13"}
+    )
+    data = response.json()
+    gifs = [{"url": g["images"]["fixed_height"]["url"], "mp4": g["images"]["fixed_height"]["mp4"]} for g in data.get("data", [])]
+    return jsonify(gifs)
+
+
+@app.route("/profile")
+def profile():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    user_id = ObjectId(session["user_id"])
+
+    user_posts = list(posts_collection.find({"user_id": user_id}).sort("created_at", -1))
+    user_comments = list(comments_collection.find({"user_id": user_id}).sort("created_at", -1))
+    user_boards = list(boards_collection.find({"user_id": user_id}).sort("created_at", -1))
+    user_spaces = list(spaces_collection.find({"created_by": user_id}).sort("created_at", -1))
+
+    for comment in user_comments:
+        post = posts_collection.find_one({"_id": comment["post_id"]})
+        comment["post_title"] = post["title"] if post else "Deleted post"
+        comment["post_id_str"] = str(comment["post_id"])
+
+    return render_template(
+        "profile.html",
+        user_posts=user_posts,
+        user_comments=user_comments,
+        user_boards=user_boards,
+        user_spaces=user_spaces
+    )
+
+
+@app.route("/posts/<post_id>/delete", methods=["POST"])
+def delete_post(post_id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    post = posts_collection.find_one({"_id": ObjectId(post_id)})
+    if not post or str(post["user_id"]) != session["user_id"]:
+        return "Unauthorized", 403
+
+    space_id = str(post["space_id"])
+    posts_collection.delete_one({"_id": ObjectId(post_id)})
+    comments_collection.delete_many({"post_id": ObjectId(post_id)})
+    saved_posts_collection.delete_many({"post_id": ObjectId(post_id)})
+    return redirect(url_for("space_detail", space_id=space_id))
+
+
+@app.route("/comments/<comment_id>/delete", methods=["POST"])
+def delete_comment(comment_id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    comment = comments_collection.find_one({"_id": ObjectId(comment_id)})
+    if not comment or str(comment["user_id"]) != session["user_id"]:
+        return "Unauthorized", 403
+
+    post_id = str(comment["post_id"])
+    comments_collection.delete_one({"_id": ObjectId(comment_id)})
+    return redirect(url_for("post_detail", post_id=post_id))
+
+
+@app.route("/boards/<board_id>/delete", methods=["POST"])
+def delete_board(board_id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    board = boards_collection.find_one({"_id": ObjectId(board_id)})
+    if not board or str(board["user_id"]) != session["user_id"]:
+        return "Unauthorized", 403
+
+    boards_collection.delete_one({"_id": ObjectId(board_id)})
+    saved_posts_collection.delete_many({"board_id": ObjectId(board_id)})
+    return redirect(url_for("boards_page"))
+
+
+@app.route("/spaces/<space_id>/delete", methods=["POST"])
+def delete_space(space_id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    space = spaces_collection.find_one({"_id": ObjectId(space_id)})
+    if not space or str(space.get("created_by", "")) != session["user_id"]:
+        return "Unauthorized", 403
+
+    spaces_collection.delete_one({"_id": ObjectId(space_id)})
+    return redirect(url_for("spaces_page"))
+
+
 seed_spaces()
 
 if __name__ == "__main__":
     
-    app.run(debug=True)   
+    app.run(debug=True, host="0.0.0.0")

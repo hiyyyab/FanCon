@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>@{{ session.get('username') }}</h1>
+
+  <hr>
+
+  <h2>Posts ({{ user_posts|length }})</h2>
+  {% if user_posts %}
+    {% for post in user_posts %}
+      <div class="card">
+        <h3><a href="{{ url_for('post_detail', post_id=post._id) }}">{{ post.title }}</a></h3>
+        <p>{{ post.content }}</p>
+      </div>
+      <hr>
+    {% endfor %}
+  {% else %}
+    <p>No posts yet.</p>
+  {% endif %}
+
+  <h2>Comments ({{ user_comments|length }})</h2>
+  {% if user_comments %}
+    {% for comment in user_comments %}
+      <div class="card">
+        <p>{{ comment.content }}</p>
+        <small>On <a href="{{ url_for('post_detail', post_id=comment.post_id_str) }}">{{ comment.post_title }}</a></small>
+      </div>
+      <hr>
+    {% endfor %}
+  {% else %}
+    <p>No comments yet.</p>
+  {% endif %}
+
+  <h2>Boards ({{ user_boards|length }})</h2>
+  {% if user_boards %}
+    {% for board in user_boards %}
+      <div class="card">
+        <h3><a href="{{ url_for('board_detail', board_id=board._id) }}">{{ board.title }}</a></h3>
+        <p>{{ board.description }}</p>
+        <small>{% if board.is_private %}Private{% else %}Public{% endif %}</small>
+      </div>
+      <hr>
+    {% endfor %}
+  {% else %}
+    <p>No boards yet.</p>
+  {% endif %}
+
+  <h2>Spaces Created ({{ user_spaces|length }})</h2>
+  {% if user_spaces %}
+    {% for space in user_spaces %}
+      <div class="card">
+        <h3><a href="{{ url_for('space_detail', space_id=space._id) }}">{{ space.name }}</a></h3>
+        <p>{{ space.description }}</p>
+      </div>
+      <hr>
+    {% endfor %}
+  {% else %}
+    <p>No spaces created yet.</p>
+  {% endif %}
+
+{% endblock %}

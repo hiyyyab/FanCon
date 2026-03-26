@@ -6,9 +6,9 @@
 /* ── Base ────────────────────────────────────────────── */
 body {
   font-family: 'Inter', -apple-system, sans-serif;
-  max-width: 880px;
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 0 24px 56px;
+  padding: 0 28px 56px;
   background: linear-gradient(160deg, #EAF1FB 0%, #F1EDFA 100%);
   background-attachment: fixed;
   color: #18243A;
@@ -25,8 +25,8 @@ nav {
   height: 62px;
   background: #fff;
   border-bottom: 1.5px solid #DDE6F5;
-  margin: 0 -24px 40px;
-  padding: 0 28px;
+  margin: 0 -28px 40px;
+  padding: 0 32px;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -340,6 +340,30 @@ button[type="button"]:hover {
   font-size: 18px;
   color: #5A6A80;
   margin-bottom: 28px;
+}
+
+/* ── Page layout (main + sidebar) ───────────────────── */
+.page-layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 28px;
+  align-items: flex-start;
+}
+
+.page-layout .sidebar {
+  position: sticky;
+  top: 80px;
+}
+
+/* ── Two-column card grid ────────────────────────────── */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.card-grid .card {
+  margin-bottom: 0;
 }
 
 /* ── Search results section header ──────────────────── */

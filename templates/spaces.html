@@ -1,26 +1,28 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h1>Fandom Spaces</h1>
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+    <h1 style="margin:0;">Spaces</h1>
+    {% if session.get('user_id') %}
+      <a href="{{ url_for('create_space') }}"><button style="padding:9px 20px; font-size:14px;">+ Create Space</button></a>
+    {% endif %}
+  </div>
 
-  {% if session.get('user_id') %}
-    <a href="{{ url_for('create_space') }}">+ Create a Space</a>
-  {% endif %}
-
-  {% for space in spaces %}
-    <div class="card">
-      <h2>
-        <a href="{{ url_for('space_detail', space_id=space._id) }}">
-          {{ space.name }}
-        </a>
-      </h2>
-      <p>{{ space.description }}</p>
-      {% if session.get('user_id') == space.created_by|string %}
-        <form method="POST" action="{{ url_for('delete_space', space_id=space._id) }}">
-          <button type="submit" onclick="return confirm('Delete this space?')">Delete</button>
-        </form>
-      {% endif %}
+  {% if spaces %}
+    <div class="card-grid">
+      {% for space in spaces %}
+        <div class="card">
+          <h3><a href="{{ url_for('space_detail', space_id=space._id) }}">{{ space.name }}</a></h3>
+          <p style="color:#4A5568; font-size:14.5px; margin-bottom:12px;">{{ space.description }}</p>
+          {% if session.get('user_id') == space.created_by|string %}
+            <form method="POST" action="{{ url_for('delete_space', space_id=space._id) }}" style="margin:0;">
+              <button type="submit" onclick="return confirm('Delete this space?')" style="font-size:12px; padding:5px 12px;">Delete</button>
+            </form>
+          {% endif %}
+        </div>
+      {% endfor %}
     </div>
-    <hr>
-  {% endfor %}
+  {% else %}
+    <p style="color:#9CA3AF;">No spaces yet. Create one!</p>
+  {% endif %}
 {% endblock %}

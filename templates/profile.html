@@ -1,63 +1,74 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h1>@{{ session.get('username') }}</h1>
-  <p>{{ followers_count }} followers · {{ following_count }} following</p>
-  <p>{% if user.get('is_private') %}Private account{% else %}Public account{% endif %} · <a href="{{ url_for('settings') }}">Settings</a></p>
+  <div class="page-layout">
 
-  <hr>
+    <!-- Main activity -->
+    <div>
+      <h1 style="margin-top:16px;">@{{ session.get('username') }}</h1>
 
-  <h2>Posts ({{ user_posts|length }})</h2>
-  {% if user_posts %}
-    {% for post in user_posts %}
+      <h2>Posts ({{ user_posts|length }})</h2>
+      {% if user_posts %}
+        {% for post in user_posts %}
+          <div class="card">
+            <h3><a href="{{ url_for('post_detail', post_id=post._id) }}">{{ post.title }}</a></h3>
+            <p style="color:#4A5568; font-size:14.5px;">{{ post.content[:120] }}{% if post.content|length > 120 %}...{% endif %}</p>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p style="color:#9CA3AF;">No posts yet.</p>
+      {% endif %}
+
+      <h2>Comments ({{ user_comments|length }})</h2>
+      {% if user_comments %}
+        {% for comment in user_comments %}
+          <div class="card">
+            <p style="font-size:14.5px;">{{ comment.content }}</p>
+            <small>On <a href="{{ url_for('post_detail', post_id=comment.post_id_str) }}">{{ comment.post_title }}</a></small>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p style="color:#9CA3AF;">No comments yet.</p>
+      {% endif %}
+
+      <h2>Spaces Created ({{ user_spaces|length }})</h2>
+      {% if user_spaces %}
+        <div class="card-grid">
+          {% for space in user_spaces %}
+            <div class="card">
+              <h3><a href="{{ url_for('space_detail', space_id=space._id) }}">{{ space.name }}</a></h3>
+              <p style="color:#4A5568; font-size:14px;">{{ space.description }}</p>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p style="color:#9CA3AF;">No spaces created yet.</p>
+      {% endif %}
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
       <div class="card">
-        <h3><a href="{{ url_for('post_detail', post_id=post._id) }}">{{ post.title }}</a></h3>
-        <p>{{ post.content }}</p>
-      </div>
-      <hr>
-    {% endfor %}
-  {% else %}
-    <p>No posts yet.</p>
-  {% endif %}
+        <p style="font-weight:600; margin-bottom:4px;">@{{ session.get('username') }}</p>
+        <p style="font-size:13.5px; color:#6B7280; margin-bottom:16px;">
+          {% if user.get('is_private') %}Private account{% else %}Public account{% endif %}
+        </p>
+        <a href="{{ url_for('settings') }}"><button type="button" style="width:100%; padding:9px; font-size:14px; margin-bottom:8px;">Settings</button></a>
+        <a href="{{ url_for('friends_page') }}"><button type="button" style="width:100%; padding:9px; font-size:14px; margin-bottom:8px;">Friends & Follows</button></a>
 
-  <h2>Comments ({{ user_comments|length }})</h2>
-  {% if user_comments %}
-    {% for comment in user_comments %}
-      <div class="card">
-        <p>{{ comment.content }}</p>
-        <small>On <a href="{{ url_for('post_detail', post_id=comment.post_id_str) }}">{{ comment.post_title }}</a></small>
-      </div>
-      <hr>
-    {% endfor %}
-  {% else %}
-    <p>No comments yet.</p>
-  {% endif %}
+        <hr style="margin:14px 0;">
 
-  <h2>Boards ({{ user_boards|length }})</h2>
-  {% if user_boards %}
-    {% for board in user_boards %}
-      <div class="card">
-        <h3><a href="{{ url_for('board_detail', board_id=board._id) }}">{{ board.title }}</a></h3>
-        <p>{{ board.description }}</p>
-        <small>{% if board.is_private %}Private{% else %}Public{% endif %}</small>
+        <p style="font-size:13px; font-weight:600; color:#4A5568; margin-bottom:10px;">Boards ({{ user_boards|length }})</p>
+        {% if user_boards %}
+          {% for board in user_boards %}
+            <a href="{{ url_for('board_detail', board_id=board._id) }}" style="display:block; font-size:14px; margin-bottom:6px;">{{ board.title }}</a>
+          {% endfor %}
+        {% else %}
+          <p style="font-size:13px; color:#9CA3AF;">No boards yet.</p>
+        {% endif %}
+        <a href="{{ url_for('create_board') }}" style="font-size:13px; display:block; margin-top:10px;">+ New Board</a>
       </div>
-      <hr>
-    {% endfor %}
-  {% else %}
-    <p>No boards yet.</p>
-  {% endif %}
+    </div>
 
-  <h2>Spaces Created ({{ user_spaces|length }})</h2>
-  {% if user_spaces %}
-    {% for space in user_spaces %}
-      <div class="card">
-        <h3><a href="{{ url_for('space_detail', space_id=space._id) }}">{{ space.name }}</a></h3>
-        <p>{{ space.description }}</p>
-      </div>
-      <hr>
-    {% endfor %}
-  {% else %}
-    <p>No spaces created yet.</p>
-  {% endif %}
-
+  </div>
 {% endblock %}

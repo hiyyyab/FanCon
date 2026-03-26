@@ -9,10 +9,9 @@
 <body>
   <nav>
     <a href="{{ url_for('index') }}" class="nav-logo">fancon</a>
-    <a href="{{ url_for('spaces_page') }}">Spaces</a>
-
     <div class="nav-right">
       {% if session.get('user_id') %}
+        <a href="{{ url_for('spaces_page') }}">Spaces</a>
         <a href="{{ url_for('boards_page') }}">Boards</a>
         <a href="{{ url_for('messages_page') }}">Messages</a>
         <a href="{{ url_for('friends_page') }}">Friends</a>

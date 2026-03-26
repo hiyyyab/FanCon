@@ -7,8 +7,32 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+
+  <!-- Decorative corner art -->
+  <svg class="deco-tl" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" fill="none">
+    <path d="M10 10 L100 10 L100 20 L20 20 L20 100 L10 100 Z" stroke="#C4962A" stroke-width="1.5"/>
+    <path d="M30 30 L100 30 L100 38 L38 38 L38 100 L30 100 Z" stroke="#C4962A" stroke-width="1"/>
+    <path d="M55 10 L55 55 L10 55" stroke="#C4962A" stroke-width="0.8" stroke-dasharray="3 4"/>
+    <circle cx="10" cy="10" r="4" fill="#C4962A"/>
+    <circle cx="100" cy="10" r="2" fill="#C4962A"/>
+    <circle cx="10" cy="100" r="2" fill="#C4962A"/>
+    <path d="M60 60 L80 40 L100 60 L80 80 Z" stroke="#C4962A" stroke-width="0.8" fill="#C4962A" fill-opacity="0.08"/>
+    <path d="M60 60 L80 40 L100 60 L80 80 Z" stroke="#C4962A" stroke-width="0.5" transform="scale(0.6) translate(40,40)"/>
+  </svg>
+
+  <svg class="deco-br" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" fill="none">
+    <path d="M10 10 L100 10 L100 20 L20 20 L20 100 L10 100 Z" stroke="#C4962A" stroke-width="1.5"/>
+    <path d="M30 30 L100 30 L100 38 L38 38 L38 100 L30 100 Z" stroke="#C4962A" stroke-width="1"/>
+    <path d="M55 10 L55 55 L10 55" stroke="#C4962A" stroke-width="0.8" stroke-dasharray="3 4"/>
+    <circle cx="10" cy="10" r="4" fill="#C4962A"/>
+    <circle cx="100" cy="10" r="2" fill="#C4962A"/>
+    <circle cx="10" cy="100" r="2" fill="#C4962A"/>
+    <path d="M60 60 L80 40 L100 60 L80 80 Z" stroke="#C4962A" stroke-width="0.8" fill="#C4962A" fill-opacity="0.08"/>
+  </svg>
+
   <nav>
     <a href="{{ url_for('index') }}" class="nav-logo">fancon</a>
+
     <div class="nav-right">
       {% if session.get('user_id') %}
         <a href="{{ url_for('spaces_page') }}">Spaces</a>
@@ -22,6 +46,7 @@
         <a href="{{ url_for('profile') }}">@{{ session.get('username') }}</a>
         <a href="{{ url_for('logout') }}">Logout</a>
       {% else %}
+        <a href="{{ url_for('spaces_page') }}">Spaces</a>
         <a href="{{ url_for('login') }}">Login</a>
         <a href="{{ url_for('signup') }}">Sign Up</a>
       {% endif %}

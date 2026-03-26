@@ -10,9 +10,10 @@
       <h2>Posts ({{ user_posts|length }})</h2>
       {% if user_posts %}
         {% for post in user_posts %}
-          <div class="card">
+          <div class="card" style="border-radius:10px;">
             <h3><a href="{{ url_for('post_detail', post_id=post._id) }}">{{ post.title }}</a></h3>
-            <p style="color:#4A5568; font-size:14.5px;">{{ post.content[:120] }}{% if post.content|length > 120 %}...{% endif %}</p>
+            <p style="color:#4A5568; font-size:14.5px;">{{ post.content[:160] }}{% if post.content|length > 160 %}...{% endif %}</p>
+            <small>By {{ session.get('username') }}</small>
           </div>
         {% endfor %}
       {% else %}
@@ -54,7 +55,6 @@
           {% if user.get('is_private') %}Private account{% else %}Public account{% endif %}
         </p>
         <a href="{{ url_for('settings') }}"><button type="button" style="width:100%; padding:9px; font-size:14px; margin-bottom:8px;">Settings</button></a>
-        <a href="{{ url_for('friends_page') }}"><button type="button" style="width:100%; padding:9px; font-size:14px; margin-bottom:8px;">Friends & Follows</button></a>
 
         <hr style="margin:14px 0;">
 

@@ -2,29 +2,30 @@
 
 {% block content %}
   {% if session.get('user_id') %}
-    <h2>Your Feed</h2>
+    <h1>Your Feed</h1>
 
     {% if feed_posts %}
       {% for post in feed_posts %}
         <div class="card">
           <span class="tag">{{ post.space_name }}</span>
           <h3><a href="{{ url_for('post_detail', post_id=post._id) }}">{{ post.title }}</a></h3>
-          <p style="color:#4A5568;">{{ post.content[:140] }}{% if post.content|length > 140 %}...{% endif %}</p>
+          <p style="color:#4A3828; font-size:15px;">{{ post.content[:160] }}{% if post.content|length > 160 %}...{% endif %}</p>
           <small>By {{ post.username }}</small>
         </div>
       {% endfor %}
     {% elif followed_space_ids %}
-      <p style="color:#6B7280;">No posts yet in your followed spaces.</p>
+      <p style="color:#8A7860;">No posts yet in your followed spaces.</p>
     {% else %}
-      <p style="color:#6B7280;">Follow some <a href="{{ url_for('spaces_page') }}">spaces</a> to see posts here.</p>
+      <p style="color:#8A7860;">Follow some <a href="{{ url_for('spaces_page') }}">spaces</a> to see posts here.</p>
     {% endif %}
 
   {% else %}
     <div class="landing">
       <h1>fancon</h1>
-      <p>Your fandom archive + discussion space.</p>
+      <div class="gold-line"></div>
+      <p>Your fandom archive &amp; discussion space.</p>
       <a href="{{ url_for('signup') }}"><button>Get Started</button></a>
-      &nbsp;
+      &nbsp;&nbsp;
       <a href="{{ url_for('login') }}"><button type="button">Log In</button></a>
     </div>
   {% endif %}

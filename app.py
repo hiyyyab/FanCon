@@ -392,13 +392,20 @@ def board_detail(board_id):
 def giphy_search():
     query = request.args.get("q", "")
     api_key = os.getenv("GIPHY_API_KEY")
-    response = http_requests.get(
-        "https://api.giphy.com/v1/gifs/search",
-        params={"api_key": api_key, "q": query, "limit": 12, "rating": "pg-13"}
-    )
-    data = response.json()
-    gifs = [{"url": g["images"]["fixed_height"]["url"], "mp4": g["images"]["fixed_height"]["mp4"]} for g in data.get("data", [])]
-    return jsonify(gifs)
+    if not api_key:
+        return jsonify({"error": "Missing GIPHY_API_KEY"}), 500
+    try:
+        response = http_requests.get(
+            "https://api.giphy.com/v1/gifs/search",
+            params={"api_key": api_key, "q": query, "limit": 12, "rating": "pg-13"}
+        )
+        data = response.json()
+        if "data" not in data:
+            return jsonify({"error": data}), 500
+        gifs = [{"url": g["images"]["fixed_height"]["url"]} for g in data["data"]]
+        return jsonify(gifs)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/profile")

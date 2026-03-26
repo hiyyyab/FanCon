@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Share Post</h1>
+
+  <div class="card">
+    <h3>{{ post.title }}</h3>
+    <p>{{ post.content[:100] }}{% if post.content|length > 100 %}...{% endif %}</p>
+  </div>
+
+  <hr>
+
+  {% if convos %}
+    <form method="POST">
+      <label>Send to</label>
+      <select name="conversation_id" required>
+        {% for convo in convos %}
+          <option value="{{ convo._id }}">{{ convo.display_name }}</option>
+        {% endfor %}
+      </select>
+
+      <label>Add a message (optional)</label>
+      <input type="text" name="content" placeholder="Say something...">
+
+      <br><br>
+      <button type="submit">Share</button>
+    </form>
+  {% else %}
+    <p>No conversations yet. <a href="{{ url_for('search_users') }}">Find someone to message</a> first.</p>
+  {% endif %}
+{% endblock %}

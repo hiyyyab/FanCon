@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Messages</h1>
+  <a href="{{ url_for('create_group') }}">+ New Group Chat</a>
+
+  <hr>
+
+  {% if convos %}
+    {% for convo in convos %}
+      <div class="card">
+        <a href="{{ url_for('conversation', conversation_id=convo._id) }}">
+          <strong>{{ convo.display_name }}</strong>
+          {% if convo.is_group %}<small>(Group)</small>{% endif %}
+        </a>
+        {% if convo.last_message %}
+          <p><small>
+            {{ convo.last_message.sender_username }}:
+            {% if convo.last_message.post_id %}
+              [shared a post]
+            {% else %}
+              {{ convo.last_message.content[:60] }}
+            {% endif %}
+          </small></p>
+        {% endif %}
+      </div>
+      <hr>
+    {% endfor %}
+  {% else %}
+    <p>No conversations yet. Search for a user to start messaging.</p>
+  {% endif %}
+{% endblock %}

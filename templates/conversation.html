@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>{{ display_name }}</h1>
+  {% if convo.is_group %}
+    <small>{{ participants|join(', ') }}</small>
+  {% endif %}
+
+  <hr>
+
+  <div id="messages">
+    {% if msgs %}
+      {% for msg in msgs %}
+        <div class="card">
+          <strong>{{ msg.sender_username }}</strong>
+          {% if msg.content %}<p>{{ msg.content }}</p>{% endif %}
+          {% if msg.shared_post %}
+            <div style="border-left: 3px solid #ccc; padding-left: 8px; margin-top: 4px;">
+              <a href="{{ url_for('post_detail', post_id=msg.shared_post._id) }}">{{ msg.shared_post.title }}</a>
+              <p>{{ msg.shared_post.content[:100] }}{% if msg.shared_post.content|length > 100 %}...{% endif %}</p>
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    {% else %}
+      <p>No messages yet. Say hello!</p>
+    {% endif %}
+  </div>
+
+  <hr>
+
+  <form method="POST">
+    <textarea name="content" rows="3" placeholder="Write a message..."></textarea>
+    <br>
+    <button type="submit">Send</button>
+  </form>
+{% endblock %}

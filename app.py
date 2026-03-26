@@ -23,6 +23,9 @@ comments_collection = db["comments"]
 boards_collection = db["boards"]
 saved_posts_collection = db["saved_posts"]
 space_follows_collection = db["space_follows"]
+user_follows_collection = db["user_follows"]
+conversations_collection = db["conversations"]
+messages_collection = db["messages"]
 
 
 def seed_spaces():
@@ -414,11 +417,15 @@ def profile():
         return redirect(url_for("login"))
 
     user_id = ObjectId(session["user_id"])
+    user = users_collection.find_one({"_id": user_id})
 
     user_posts = list(posts_collection.find({"user_id": user_id}).sort("created_at", -1))
     user_comments = list(comments_collection.find({"user_id": user_id}).sort("created_at", -1))
     user_boards = list(boards_collection.find({"user_id": user_id}).sort("created_at", -1))
     user_spaces = list(spaces_collection.find({"created_by": user_id}).sort("created_at", -1))
+
+    followers_count = user_follows_collection.count_documents({"following_id": user_id})
+    following_count = user_follows_collection.count_documents({"follower_id": user_id})
 
     for comment in user_comments:
         post = posts_collection.find_one({"_id": comment["post_id"]})
@@ -427,10 +434,13 @@ def profile():
 
     return render_template(
         "profile.html",
+        user=user,
         user_posts=user_posts,
         user_comments=user_comments,
         user_boards=user_boards,
-        user_spaces=user_spaces
+        user_spaces=user_spaces,
+        followers_count=followers_count,
+        following_count=following_count
     )
 
 
@@ -489,6 +499,314 @@ def delete_space(space_id):
 
     spaces_collection.delete_one({"_id": ObjectId(space_id)})
     return redirect(url_for("spaces_page"))
+
+
+@app.route("/users/search")
+def search_users():
+    q = request.args.get("q", "").strip()
+    users = []
+    if q:
+        users = list(users_collection.find(
+            {"username": {"$regex": q, "$options": "i"}},
+            {"password_hash": 0}
+        ).limit(10))
+    return render_template("search_users.html", users=users, q=q)
+
+
+@app.route("/users/<username>")
+def user_profile(username):
+    target = users_collection.find_one({"username": username})
+    if not target:
+        return "User not found", 404
+
+    if "user_id" in session and session["user_id"] == str(target["_id"]):
+        return redirect(url_for("profile"))
+
+    is_following = False
+    is_friend = False
+
+    if "user_id" in session:
+        viewer_id = ObjectId(session["user_id"])
+        target_id = target["_id"]
+
+        viewer_follows_target = user_follows_collection.find_one({
+            "follower_id": viewer_id, "following_id": target_id
+        }) is not None
+
+        target_follows_viewer = user_follows_collection.find_one({
+            "follower_id": target_id, "following_id": viewer_id
+        }) is not None
+
+        is_following = viewer_follows_target
+        is_friend = viewer_follows_target and target_follows_viewer
+
+    is_private = target.get("is_private", False)
+    can_view = not is_private or is_friend
+
+    user_posts = []
+    user_boards = []
+    user_spaces = []
+
+    if can_view:
+        user_posts = list(posts_collection.find({"user_id": target["_id"]}).sort("created_at", -1))
+        user_boards = list(boards_collection.find({"user_id": target["_id"], "is_private": False}).sort("created_at", -1))
+        user_spaces = list(spaces_collection.find({"created_by": target["_id"]}).sort("created_at", -1))
+
+    followers_count = user_follows_collection.count_documents({"following_id": target["_id"]})
+    following_count = user_follows_collection.count_documents({"follower_id": target["_id"]})
+
+    return render_template("user_profile.html",
+        target=target,
+        is_following=is_following,
+        is_friend=is_friend,
+        can_view=can_view,
+        user_posts=user_posts,
+        user_boards=user_boards,
+        user_spaces=user_spaces,
+        followers_count=followers_count,
+        following_count=following_count
+    )
+
+
+@app.route("/users/<username>/follow", methods=["POST"])
+def follow_user(username):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    target = users_collection.find_one({"username": username})
+    if not target or str(target["_id"]) == session["user_id"]:
+        return "Invalid", 400
+
+    existing = user_follows_collection.find_one({
+        "follower_id": ObjectId(session["user_id"]),
+        "following_id": target["_id"]
+    })
+
+    if existing:
+        user_follows_collection.delete_one({"_id": existing["_id"]})
+    else:
+        user_follows_collection.insert_one({
+            "follower_id": ObjectId(session["user_id"]),
+            "following_id": target["_id"],
+            "created_at": datetime.utcnow()
+        })
+
+    return redirect(url_for("user_profile", username=username))
+
+
+@app.route("/settings", methods=["GET", "POST"])
+def settings():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+        is_private = request.form.get("is_private") == "on"
+        users_collection.update_one(
+            {"_id": ObjectId(session["user_id"])},
+            {"$set": {"is_private": is_private}}
+        )
+        flash("Settings updated.")
+        return redirect(url_for("settings"))
+
+    user = users_collection.find_one({"_id": ObjectId(session["user_id"])})
+    return render_template("settings.html", user=user)
+
+
+@app.route("/messages")
+def messages_page():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    user_id = ObjectId(session["user_id"])
+    convos = list(conversations_collection.find({"participants": user_id}).sort("updated_at", -1))
+
+    for convo in convos:
+        last_msg = messages_collection.find_one(
+            {"conversation_id": convo["_id"]},
+            sort=[("created_at", -1)]
+        )
+        convo["last_message"] = last_msg
+        if not convo.get("is_group"):
+            other_id = next((p for p in convo["participants"] if p != user_id), None)
+            if other_id:
+                other_user = users_collection.find_one({"_id": other_id}, {"username": 1})
+                convo["display_name"] = other_user["username"] if other_user else "Unknown"
+        else:
+            convo["display_name"] = convo.get("name", "Group Chat")
+
+    return render_template("messages.html", convos=convos)
+
+
+@app.route("/messages/new/<username>", methods=["POST"])
+def new_dm(username):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    target = users_collection.find_one({"username": username})
+    if not target:
+        return "User not found", 404
+
+    user_id = ObjectId(session["user_id"])
+    target_id = target["_id"]
+
+    existing = conversations_collection.find_one({
+        "is_group": False,
+        "participants": {"$all": [user_id, target_id], "$size": 2}
+    })
+
+    if existing:
+        return redirect(url_for("conversation", conversation_id=str(existing["_id"])))
+
+    result = conversations_collection.insert_one({
+        "participants": [user_id, target_id],
+        "is_group": False,
+        "created_at": datetime.utcnow(),
+        "updated_at": datetime.utcnow()
+    })
+    return redirect(url_for("conversation", conversation_id=str(result.inserted_id)))
+
+
+@app.route("/messages/group/create", methods=["GET", "POST"])
+def create_group():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+        name = request.form["name"].strip()
+        usernames = [u.strip() for u in request.form["usernames"].split(",") if u.strip()]
+
+        participants = [ObjectId(session["user_id"])]
+        for uname in usernames:
+            u = users_collection.find_one({"username": uname})
+            if u and u["_id"] not in participants:
+                participants.append(u["_id"])
+
+        if len(participants) < 2:
+            flash("Add at least one valid username.")
+            return redirect(url_for("create_group"))
+
+        result = conversations_collection.insert_one({
+            "participants": participants,
+            "is_group": True,
+            "name": name,
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow()
+        })
+        return redirect(url_for("conversation", conversation_id=str(result.inserted_id)))
+
+    return render_template("create_group.html")
+
+
+@app.route("/messages/<conversation_id>", methods=["GET", "POST"])
+def conversation(conversation_id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    user_id = ObjectId(session["user_id"])
+    convo = conversations_collection.find_one({
+        "_id": ObjectId(conversation_id),
+        "participants": user_id
+    })
+
+    if not convo:
+        return "Conversation not found", 404
+
+    if request.method == "POST":
+        content = request.form.get("content", "").strip()
+        post_id = request.form.get("post_id", "").strip()
+
+        if content or post_id:
+            message = {
+                "conversation_id": ObjectId(conversation_id),
+                "sender_id": user_id,
+                "sender_username": session["username"],
+                "content": content,
+                "created_at": datetime.utcnow()
+            }
+            if post_id:
+                message["post_id"] = ObjectId(post_id)
+            messages_collection.insert_one(message)
+            conversations_collection.update_one(
+                {"_id": ObjectId(conversation_id)},
+                {"$set": {"updated_at": datetime.utcnow()}}
+            )
+
+        return redirect(url_for("conversation", conversation_id=conversation_id))
+
+    msgs = list(messages_collection.find(
+        {"conversation_id": ObjectId(conversation_id)}
+    ).sort("created_at", 1))
+
+    for msg in msgs:
+        if msg.get("post_id"):
+            msg["shared_post"] = posts_collection.find_one({"_id": msg["post_id"]})
+
+    participants = []
+    for pid in convo["participants"]:
+        u = users_collection.find_one({"_id": pid}, {"username": 1})
+        if u:
+            participants.append(u["username"])
+
+    if convo.get("is_group"):
+        display_name = convo.get("name", "Group Chat")
+    else:
+        display_name = next((p for p in participants if p != session["username"]), "Unknown")
+
+    return render_template("conversation.html",
+        convo=convo,
+        msgs=msgs,
+        participants=participants,
+        display_name=display_name
+    )
+
+
+@app.route("/posts/<post_id>/share", methods=["GET", "POST"])
+def share_post(post_id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    post = posts_collection.find_one({"_id": ObjectId(post_id)})
+    if not post:
+        return "Post not found", 404
+
+    user_id = ObjectId(session["user_id"])
+
+    if request.method == "POST":
+        conversation_id = request.form["conversation_id"]
+        content = request.form.get("content", "").strip()
+
+        convo = conversations_collection.find_one({
+            "_id": ObjectId(conversation_id),
+            "participants": user_id
+        })
+        if not convo:
+            return "Conversation not found", 404
+
+        messages_collection.insert_one({
+            "conversation_id": ObjectId(conversation_id),
+            "sender_id": user_id,
+            "sender_username": session["username"],
+            "content": content,
+            "post_id": ObjectId(post_id),
+            "created_at": datetime.utcnow()
+        })
+        conversations_collection.update_one(
+            {"_id": ObjectId(conversation_id)},
+            {"$set": {"updated_at": datetime.utcnow()}}
+        )
+        return redirect(url_for("conversation", conversation_id=conversation_id))
+
+    convos = list(conversations_collection.find({"participants": user_id}).sort("updated_at", -1))
+    for convo in convos:
+        if not convo.get("is_group"):
+            other_id = next((p for p in convo["participants"] if p != user_id), None)
+            if other_id:
+                other_user = users_collection.find_one({"_id": other_id}, {"username": 1})
+                convo["display_name"] = other_user["username"] if other_user else "Unknown"
+        else:
+            convo["display_name"] = convo.get("name", "Group Chat")
+
+    return render_template("share_post.html", post=post, convos=convos)
 
 
 seed_spaces()

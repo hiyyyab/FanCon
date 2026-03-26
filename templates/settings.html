@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Settings</h1>
+
+  <form method="POST">
+    <label>
+      <input type="checkbox" name="is_private" {% if user.get('is_private') %}checked{% endif %}>
+      Private Account
+    </label>
+    <p><small>When private, only mutual followers (friends) can see your posts and boards.</small></p>
+
+    <br>
+    <button type="submit">Save</button>
+  </form>
+{% endblock %}

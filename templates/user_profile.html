@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>@{{ target.username }}</h1>
+  <p>{{ followers_count }} followers · {{ following_count }} following</p>
+  {% if is_friend %}<p>Friends</p>{% endif %}
+
+  {% if session.get('user_id') %}
+    <form method="POST" action="{{ url_for('follow_user', username=target.username) }}" style="display:inline">
+      <button type="submit">{% if is_following %}Unfollow{% else %}Follow{% endif %}</button>
+    </form>
+    <form method="POST" action="{{ url_for('new_dm', username=target.username) }}" style="display:inline">
+      <button type="submit">Message</button>
+    </form>
+  {% endif %}
+
+  <hr>
+
+  {% if can_view %}
+    <h2>Posts ({{ user_posts|length }})</h2>
+    {% if user_posts %}
+      {% for post in user_posts %}
+        <div class="card">
+          <h3><a href="{{ url_for('post_detail', post_id=post._id) }}">{{ post.title }}</a></h3>
+          <p>{{ post.content }}</p>
+        </div>
+        <hr>
+      {% endfor %}
+    {% else %}
+      <p>No posts yet.</p>
+    {% endif %}
+
+    <h2>Public Boards ({{ user_boards|length }})</h2>
+    {% if user_boards %}
+      {% for board in user_boards %}
+        <div class="card">
+          <h3>{{ board.title }}</h3>
+          <p>{{ board.description }}</p>
+        </div>
+        <hr>
+      {% endfor %}
+    {% else %}
+      <p>No public boards.</p>
+    {% endif %}
+
+    <h2>Spaces Created ({{ user_spaces|length }})</h2>
+    {% if user_spaces %}
+      {% for space in user_spaces %}
+        <div class="card">
+          <h3><a href="{{ url_for('space_detail', space_id=space._id) }}">{{ space.name }}</a></h3>
+          <p>{{ space.description }}</p>
+        </div>
+        <hr>
+      {% endfor %}
+    {% else %}
+      <p>No spaces created yet.</p>
+    {% endif %}
+  {% else %}
+    <p>This account is private. Follow them back to see their profile.</p>
+  {% endif %}
+{% endblock %}

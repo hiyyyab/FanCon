@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Search Users</h1>
+
+  <form method="GET">
+    <input type="text" name="q" value="{{ q }}" placeholder="Search by username...">
+    <button type="submit">Search</button>
+  </form>
+
+  <hr>
+
+  {% if users %}
+    {% for user in users %}
+      <div class="card">
+        <a href="{{ url_for('user_profile', username=user.username) }}">@{{ user.username }}</a>
+      </div>
+      <hr>
+    {% endfor %}
+  {% elif q %}
+    <p>No users found.</p>
+  {% endif %}
+{% endblock %}

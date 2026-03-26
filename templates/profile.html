@@ -2,6 +2,8 @@
 
 {% block content %}
   <h1>@{{ session.get('username') }}</h1>
+  <p>{{ followers_count }} followers · {{ following_count }} following</p>
+  <p>{% if user.get('is_private') %}Private account{% else %}Public account{% endif %} · <a href="{{ url_for('settings') }}">Settings</a></p>
 
   <hr>
 

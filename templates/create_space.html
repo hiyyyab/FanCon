@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Create a Space</h1>
+
+  <form method="POST">
+    <label>Space Name</label>
+    <input type="text" name="name" required>
+
+    <label>Description</label>
+    <textarea name="description" rows="4" required></textarea>
+
+    <br><br>
+    <button type="submit">Create Space</button>
+  </form>
+{% endblock %}

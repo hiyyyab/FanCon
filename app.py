@@ -114,6 +114,28 @@ def spaces_page():
     return render_template("spaces.html", spaces=spaces)
 
 
+@app.route("/spaces/create", methods=["GET", "POST"])
+def create_space():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+        name = request.form["name"].strip()
+        description = request.form["description"].strip()
+
+        space = {
+            "name": name,
+            "description": description,
+            "created_by": ObjectId(session["user_id"]),
+            "created_at": datetime.utcnow()
+        }
+
+        spaces_collection.insert_one(space)
+        return redirect(url_for("spaces_page"))
+
+    return render_template("create_space.html")
+
+
 @app.route("/spaces/<space_id>")
 def space_detail(space_id):
     space = spaces_collection.find_one({"_id": ObjectId(space_id)})
@@ -310,7 +332,8 @@ def board_detail(board_id):
         board_saved_items=board_saved_items
     )
 
+seed_spaces()
 
 if __name__ == "__main__":
-    seed_spaces()
+    
     app.run(debug=True)   

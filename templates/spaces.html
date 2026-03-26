@@ -3,6 +3,10 @@
 {% block content %}
   <h1>Fandom Spaces</h1>
 
+  {% if session.get('user_id') %}
+    <a href="{{ url_for('create_space') }}">+ Create a Space</a>
+  {% endif %}
+
   {% for space in spaces %}
     <div class="card">
       <h2>

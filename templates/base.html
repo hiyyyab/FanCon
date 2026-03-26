@@ -15,8 +15,9 @@
       {% if session.get('user_id') %}
         <a href="{{ url_for('boards_page') }}">Boards</a>
         <a href="{{ url_for('messages_page') }}">Messages</a>
-        <form action="{{ url_for('search_users') }}" method="GET">
-          <input type="text" name="q" placeholder="Search users...">
+        <a href="{{ url_for('friends_page') }}">Friends</a>
+        <form action="{{ url_for('search') }}" method="GET">
+          <input type="text" name="q" placeholder="Search...">
           <button type="submit">Search</button>
         </form>
         <a href="{{ url_for('profile') }}">@{{ session.get('username') }}</a>

@@ -1,129 +1,147 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h1>{{ post.title }}</h1>
-  <p>{{ post.content }}</p>
-  <small>By {{ post.username }}</small>
 
-  {% if session.get('user_id') == post.user_id|string %}
-    <form method="POST" action="{{ url_for('delete_post', post_id=post._id) }}" style="display:inline">
-      <button type="submit" onclick="return confirm('Delete this post?')">Delete Post</button>
-    </form>
-  {% endif %}
-  {% if session.get('user_id') %}
-    <a href="{{ url_for('share_post', post_id=post._id) }}">Share</a>
-  {% endif %}
+  <div style="display:flex; gap:24px; align-items:flex-start;">
 
-  {% if post.image_url %}
-    <p><img src="{{ post.image_url }}" alt="Post image" width="300"></p>
-  {% endif %}
+    <!-- Main content -->
+    <div style="flex:1; min-width:0;">
+      <h1 style="margin-top:16px;">{{ post.title }}</h1>
+      <p style="color:#4A5568;">{{ post.content }}</p>
+      <small>By {{ post.username }}</small>
 
-  <hr>
+      {% if post.image_url %}
+        <div style="margin-top:12px;">
+          <img src="{{ post.image_url }}" alt="Post image" style="max-width:100%; border-radius:12px;">
+        </div>
+      {% endif %}
 
-  {% if session.get('user_id') %}
-    <h2>Save to a Board</h2>
-
-    {% if user_boards %}
-      <form method="POST" action="{{ url_for('save_post', post_id=post._id) }}">
-        <label>Select Board</label>
-        <select name="board_id" required>
-          {% for board in user_boards %}
-            <option value="{{ board._id }}">{{ board.title }}</option>
-          {% endfor %}
-        </select>
-
-        <label>Add a note (optional)</label>
-        <textarea name="note" rows="3"></textarea>
-
-        <button type="submit">Save Post</button>
-      </form>
-    {% else %}
-      <p>You need to <a href="{{ url_for('create_board') }}">create a board</a> first.</p>
-    {% endif %}
-  {% endif %}
-
-  <hr>
-
-  <h2>Comments</h2>
-
-  {% if session.get('user_id') %}
-    <form method="POST">
-      <label>Add Comment</label>
-      <textarea name="content" rows="4"></textarea>
-
-      <label>Image or GIF URL (optional)</label>
-      <input type="text" name="image_url" id="comment_image_url" placeholder="Paste a URL or pick a GIF below">
-      <small>For images: <a href="https://images.google.com" target="_blank">Google Images</a> — right-click → "Copy image address"</small>
-      <div id="comment_preview"></div>
-
-      <div>
-        <input type="text" id="comment_gif_search" placeholder="Search GIFs...">
-        <button type="button" onclick="searchGifs('comment_image_url', 'comment_gif_results')">Search</button>
-      </div>
-      <div id="comment_gif_results" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;"></div>
-
-      <button type="submit">Comment</button>
-    </form>
-
-    <script>
-      const commentInput = document.getElementById('comment_image_url');
-      const commentPreview = document.getElementById('comment_preview');
-      commentInput.addEventListener('input', () => {
-        const url = commentInput.value.trim();
-        commentPreview.innerHTML = url ? `<img src="${url}" alt="preview" width="200">` : '';
-      });
-
-      function searchGifs(targetInputId, resultsId) {
-        const searchId = targetInputId === 'comment_image_url' ? 'comment_gif_search' : 'gif_search';
-        const query = document.getElementById(searchId).value.trim();
-        if (!query) return;
-        fetch(`/giphy/search?q=${encodeURIComponent(query)}`)
-          .then(r => r.json())
-          .then(gifs => {
-            const container = document.getElementById(resultsId);
-            container.innerHTML = '';
-            gifs.forEach(gif => {
-              const img = document.createElement('img');
-              img.src = gif.url;
-              img.width = 120;
-              img.style.cursor = 'pointer';
-              img.onclick = () => {
-                document.getElementById(targetInputId).value = gif.url;
-                document.getElementById(targetInputId).dispatchEvent(new Event('input'));
-                container.innerHTML = '';
-              };
-              container.appendChild(img);
-            });
-          });
-      }
-
-      document.getElementById('comment_gif_search').addEventListener('keydown', e => {
-        if (e.key === 'Enter') { e.preventDefault(); searchGifs('comment_image_url', 'comment_gif_results'); }
-      });
-    </script>
-  {% else %}
-    <p><a href="{{ url_for('login') }}">Log in</a> to comment.</p>
-  {% endif %}
-
-  <hr>
-
-  {% if post_comments %}
-    {% for comment in post_comments %}
-      <div class="card">
-        <strong>{{ comment.username }}</strong>
-        <p>{{ comment.content }}</p>
-        {% if comment.image_url %}
-          <img src="{{ comment.image_url }}" alt="comment image" width="200">
-        {% endif %}
-        {% if session.get('user_id') == comment.user_id|string %}
-          <form method="POST" action="{{ url_for('delete_comment', comment_id=comment._id) }}">
-            <button type="submit" onclick="return confirm('Delete this comment?')">Delete</button>
+      <div style="margin-top:12px; display:flex; gap:10px; align-items:center;">
+        {% if session.get('user_id') == post.user_id|string %}
+          <form method="POST" action="{{ url_for('delete_post', post_id=post._id) }}" style="margin:0;">
+            <button type="submit" onclick="return confirm('Delete this post?')" style="padding:6px 14px; font-size:13px;">Delete</button>
           </form>
         {% endif %}
+        {% if session.get('user_id') %}
+          <a href="{{ url_for('share_post', post_id=post._id) }}" style="font-size:13.5px;">Share</a>
+        {% endif %}
       </div>
+
       <hr>
-    {% endfor %}
-  {% else %}
-    <p>No comments yet.</p>
-  {% endif %}
+
+      <!-- Comments section -->
+      <h2 style="margin-bottom:14px;">Comments</h2>
+
+      {% if session.get('user_id') %}
+        <div class="card" style="margin-bottom:20px; padding:16px 18px;">
+          <form method="POST" style="margin:0;">
+            <textarea name="content" rows="2" placeholder="Write a comment..." style="margin-bottom:10px; font-size:14px; padding:10px 12px;"></textarea>
+
+            <!-- Image + GIF side by side -->
+            <div style="display:flex; gap:10px; align-items:flex-start; margin-bottom:10px;">
+              <div style="flex:1;">
+                <input type="text" name="image_url" id="comment_image_url" placeholder="Paste image URL" style="font-size:13px; padding:8px 12px; margin:0; border-radius:10px;">
+              </div>
+              <div style="flex:1; display:flex; gap:6px;">
+                <input type="text" id="comment_gif_search" placeholder="Search GIFs" style="font-size:13px; padding:8px 12px; margin:0; border-radius:10px; flex:1;">
+                <button type="button" onclick="searchGifs()" style="padding:8px 12px; font-size:12px; border-radius:10px; white-space:nowrap; flex-shrink:0;">Search</button>
+              </div>
+            </div>
+
+            <div id="comment_preview" style="margin-bottom:8px;"></div>
+            <div id="comment_gif_results" style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:10px;"></div>
+
+            <button type="submit" style="padding:8px 20px; font-size:14px;">Comment</button>
+          </form>
+        </div>
+      {% else %}
+        <p><a href="{{ url_for('login') }}">Log in</a> to comment.</p>
+      {% endif %}
+
+      {% if post_comments %}
+        {% for comment in post_comments %}
+          <div class="card" style="padding:14px 18px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+              <strong style="font-size:14px;">{{ comment.username }}</strong>
+              {% if session.get('user_id') == comment.user_id|string %}
+                <form method="POST" action="{{ url_for('delete_comment', comment_id=comment._id) }}" style="margin:0;">
+                  <button type="submit" onclick="return confirm('Delete this comment?')" style="padding:4px 10px; font-size:12px;">Delete</button>
+                </form>
+              {% endif %}
+            </div>
+            {% if comment.content %}<p style="margin:6px 0 0; font-size:14.5px; color:#2E3A52;">{{ comment.content }}</p>{% endif %}
+            {% if comment.image_url %}
+              <img src="{{ comment.image_url }}" alt="comment image" style="max-width:240px; border-radius:10px; margin-top:8px;">
+            {% endif %}
+          </div>
+        {% endfor %}
+      {% else %}
+        <p style="color:#9CA3AF;">No comments yet.</p>
+      {% endif %}
+    </div>
+
+    <!-- Save to board sidebar -->
+    {% if session.get('user_id') %}
+      <div style="width:210px; flex-shrink:0; position:sticky; top:80px;">
+        <div class="card" style="padding:14px 16px;">
+          <p style="font-size:13px; font-weight:600; color:#2E3A52; margin:0 0 10px;">Save to Board</p>
+          {% if user_boards %}
+            <form method="POST" action="{{ url_for('save_post', post_id=post._id) }}" style="margin:0;">
+              <select name="board_id" required style="font-size:13px; padding:8px 10px; border-radius:10px; margin-bottom:8px;">
+                {% for board in user_boards %}
+                  <option value="{{ board._id }}">{{ board.title }}</option>
+                {% endfor %}
+              </select>
+              <input type="text" name="note" placeholder="Add a note (optional)" style="font-size:13px; padding:8px 10px; border-radius:10px; margin-bottom:8px;">
+              <button type="submit" style="width:100%; padding:8px; font-size:13px; border-radius:10px;">Save</button>
+            </form>
+          {% else %}
+            <p style="font-size:13px; color:#9CA3AF; margin:0;"><a href="{{ url_for('create_board') }}">Create a board</a> first.</p>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+
+  </div>
+
+  <script>
+    const commentInput = document.getElementById('comment_image_url');
+    const commentPreview = document.getElementById('comment_preview');
+    if (commentInput) {
+      commentInput.addEventListener('input', () => {
+        const url = commentInput.value.trim();
+        commentPreview.innerHTML = url ? `<img src="${url}" style="max-width:200px; border-radius:8px;">` : '';
+      });
+    }
+
+    function searchGifs() {
+      const query = document.getElementById('comment_gif_search').value.trim();
+      if (!query) return;
+      fetch(`/giphy/search?q=${encodeURIComponent(query)}`)
+        .then(r => r.json())
+        .then(gifs => {
+          const container = document.getElementById('comment_gif_results');
+          container.innerHTML = '';
+          gifs.forEach(gif => {
+            const img = document.createElement('img');
+            img.src = gif.url;
+            img.style.cssText = 'width:90px; height:70px; object-fit:cover; border-radius:8px; cursor:pointer;';
+            img.onclick = () => {
+              commentInput.value = gif.url;
+              commentInput.dispatchEvent(new Event('input'));
+              container.innerHTML = '';
+            };
+            container.appendChild(img);
+          });
+        });
+    }
+
+    const gifSearch = document.getElementById('comment_gif_search');
+    if (gifSearch) {
+      gifSearch.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); searchGifs(); }
+      });
+    }
+  </script>
+
 {% endblock %}

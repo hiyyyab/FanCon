@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Friends & Follows</h1>
+
+  <div class="tab-bar">
+    <a href="#friends" class="active">Friends ({{ friends|length }})</a>
+    <a href="#followers">Followers ({{ followers|length }})</a>
+    <a href="#following">Following ({{ following|length }})</a>
+  </div>
+
+  <div id="friends">
+    <h2>Friends</h2>
+    <p style="color:#6B7280; font-size:14px; margin-top:-8px;">People you both follow each other.</p>
+    {% if friends %}
+      {% for user in friends %}
+        <div class="card">
+          <div class="user-row">
+            <div class="avatar">{{ user.username[0] }}</div>
+            <div class="user-info">
+              <strong><a href="{{ url_for('user_profile', username=user.username) }}">@{{ user.username }}</a></strong>
+              <small>Mutual follow</small>
+            </div>
+            <form method="POST" action="{{ url_for('new_dm', username=user.username) }}" style="margin:0;">
+              <button type="submit" style="padding:8px 16px; font-size:13px;">Message</button>
+            </form>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p style="color:#9CA3AF;">No friends yet. When someone follows you back, they'll appear here.</p>
+    {% endif %}
+  </div>
+
+  <hr>
+
+  <div id="followers">
+    <h2>Followers</h2>
+    {% if followers %}
+      {% for user in followers %}
+        <div class="card">
+          <div class="user-row">
+            <div class="avatar">{{ user.username[0] }}</div>
+            <div class="user-info">
+              <strong><a href="{{ url_for('user_profile', username=user.username) }}">@{{ user.username }}</a></strong>
+            </div>
+            <form method="POST" action="{{ url_for('new_dm', username=user.username) }}" style="margin:0;">
+              <button type="submit" style="padding:8px 16px; font-size:13px;">Message</button>
+            </form>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p style="color:#9CA3AF;">No followers yet.</p>
+    {% endif %}
+  </div>
+
+  <hr>
+
+  <div id="following">
+    <h2>Following</h2>
+    {% if following %}
+      {% for user in following %}
+        <div class="card">
+          <div class="user-row">
+            <div class="avatar">{{ user.username[0] }}</div>
+            <div class="user-info">
+              <strong><a href="{{ url_for('user_profile', username=user.username) }}">@{{ user.username }}</a></strong>
+            </div>
+            <form method="POST" action="{{ url_for('new_dm', username=user.username) }}" style="margin:0;">
+              <button type="submit" style="padding:8px 16px; font-size:13px;">Message</button>
+            </form>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p style="color:#9CA3AF;">Not following anyone yet.</p>
+    {% endif %}
+  </div>
+{% endblock %}

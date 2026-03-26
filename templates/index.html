@@ -1,29 +1,31 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <div class="welcome-banner">
-    <h1>Welcome to fancon</h1>
-    <p>Your fandom archive + discussion space.</p>
-  </div>
-
   {% if session.get('user_id') %}
-    <hr>
     <h2>Your Feed</h2>
 
     {% if feed_posts %}
       {% for post in feed_posts %}
         <div class="card">
-          <small>{{ post.space_name }}</small>
+          <span class="tag">{{ post.space_name }}</span>
           <h3><a href="{{ url_for('post_detail', post_id=post._id) }}">{{ post.title }}</a></h3>
-          <p>{{ post.content }}</p>
+          <p style="color:#4A5568;">{{ post.content[:140] }}{% if post.content|length > 140 %}...{% endif %}</p>
           <small>By {{ post.username }}</small>
         </div>
-        <hr>
       {% endfor %}
     {% elif followed_space_ids %}
-      <p>No posts yet in your followed spaces.</p>
+      <p style="color:#6B7280;">No posts yet in your followed spaces.</p>
     {% else %}
-      <p>Follow some <a href="{{ url_for('spaces_page') }}">spaces</a> to see posts here.</p>
+      <p style="color:#6B7280;">Follow some <a href="{{ url_for('spaces_page') }}">spaces</a> to see posts here.</p>
     {% endif %}
+
+  {% else %}
+    <div class="landing">
+      <h1>fancon</h1>
+      <p>Your fandom archive + discussion space.</p>
+      <a href="{{ url_for('signup') }}"><button>Get Started</button></a>
+      &nbsp;
+      <a href="{{ url_for('login') }}"><button type="button">Log In</button></a>
+    </div>
   {% endif %}
 {% endblock %}

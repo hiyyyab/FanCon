@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Search</h1>
+
+  <form method="GET" style="margin-top:0; margin-bottom:28px;">
+    <input type="text" name="q" value="{{ q }}" placeholder="Search spaces, posts, or users..." autofocus>
+    <button type="submit">Search</button>
+  </form>
+
+  {% if q %}
+    <div class="results-section">
+      <h2>Spaces <span style="font-size:14px; color:#9CA3AF;">({{ spaces|length }})</span></h2>
+      {% if spaces %}
+        {% for space in spaces %}
+          <div class="card">
+            <h3><a href="{{ url_for('space_detail', space_id=space._id) }}">{{ space.name }}</a></h3>
+            <p style="color:#4A5568;">{{ space.description }}</p>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p style="color:#9CA3AF;">No spaces found.</p>
+      {% endif %}
+    </div>
+
+    <div class="results-section">
+      <h2>Posts <span style="font-size:14px; color:#9CA3AF;">({{ posts|length }})</span></h2>
+      {% if posts %}
+        {% for post in posts %}
+          <div class="card">
+            <span class="tag">{{ post.space_name }}</span>
+            <h3><a href="{{ url_for('post_detail', post_id=post._id) }}">{{ post.title }}</a></h3>
+            <p style="color:#4A5568;">{{ post.content[:120] }}{% if post.content|length > 120 %}...{% endif %}</p>
+            <small>By {{ post.username }}</small>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p style="color:#9CA3AF;">No posts found.</p>
+      {% endif %}
+    </div>
+
+    <div class="results-section">
+      <h2>Users <span style="font-size:14px; color:#9CA3AF;">({{ users|length }})</span></h2>
+      {% if users %}
+        {% for user in users %}
+          <div class="card">
+            <div class="user-row">
+              <div class="avatar">{{ user.username[0] }}</div>
+              <div class="user-info">
+                <strong><a href="{{ url_for('user_profile', username=user.username) }}">@{{ user.username }}</a></strong>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p style="color:#9CA3AF;">No users found.</p>
+      {% endif %}
+    </div>
+
+  {% elif not q %}
+    <p style="color:#9CA3AF;">Type something to search across spaces, posts, and users.</p>
+  {% endif %}
+{% endblock %}

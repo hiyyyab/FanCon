@@ -29,21 +29,11 @@ messages_collection = db["messages"]
 
 
 def seed_spaces():
-    if spaces_collection.count_documents({}) == 0:
-        spaces_collection.insert_many([
-            {
-                "name": "Manchester United",
-                "description": "Posts, memories, and discussions for United fans."
-            },
-            {
-                "name": "Books",
-                "description": "Quotes, characters, reading eras, and fandom conversations."
-            },
-            {
-                "name": "Music",
-                "description": "Fan discussions, favorite eras, and saved moments."
-            }
-        ])
+    # Remove the old default seeded spaces
+    spaces_collection.delete_many({
+        "name": {"$in": ["Manchester United", "Books", "Music"]},
+        "created_by": {"$exists": False}
+    })
 
 
 @app.route("/")
@@ -501,16 +491,47 @@ def delete_space(space_id):
     return redirect(url_for("spaces_page"))
 
 
+@app.route("/search")
+def search():
+    q = request.args.get("q", "").strip()
+    users, posts, spaces = [], [], []
+    if q:
+        regex = {"$regex": q, "$options": "i"}
+        users = list(users_collection.find({"username": regex}, {"password_hash": 0}).limit(8))
+        spaces = list(spaces_collection.find({"$or": [{"name": regex}, {"description": regex}]}).limit(8))
+        posts = list(posts_collection.find({"$or": [{"title": regex}, {"content": regex}]}).sort("created_at", -1).limit(12))
+        space_ids = list({p["space_id"] for p in posts})
+        space_map = {s["_id"]: s["name"] for s in spaces_collection.find({"_id": {"$in": space_ids}})}
+        for post in posts:
+            post["space_name"] = space_map.get(post["space_id"], "")
+    return render_template("search.html", q=q, users=users, posts=posts, spaces=spaces)
+
+
 @app.route("/users/search")
 def search_users():
     q = request.args.get("q", "").strip()
-    users = []
-    if q:
-        users = list(users_collection.find(
-            {"username": {"$regex": q, "$options": "i"}},
-            {"password_hash": 0}
-        ).limit(10))
-    return render_template("search_users.html", users=users, q=q)
+    return redirect(url_for("search", q=q))
+
+
+@app.route("/friends")
+def friends_page():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    user_id = ObjectId(session["user_id"])
+
+    following_docs = list(user_follows_collection.find({"follower_id": user_id}))
+    follower_docs = list(user_follows_collection.find({"following_id": user_id}))
+
+    following_ids = [f["following_id"] for f in following_docs]
+    follower_ids = [f["follower_id"] for f in follower_docs]
+    friend_ids = [fid for fid in following_ids if fid in follower_ids]
+
+    friends = list(users_collection.find({"_id": {"$in": friend_ids}}, {"password_hash": 0}))
+    following = list(users_collection.find({"_id": {"$in": following_ids}}, {"password_hash": 0}))
+    followers = list(users_collection.find({"_id": {"$in": follower_ids}}, {"password_hash": 0}))
+
+    return render_template("friends.html", friends=friends, following=following, followers=followers)
 
 
 @app.route("/users/<username>")

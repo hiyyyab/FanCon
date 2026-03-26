@@ -25,8 +25,22 @@
         <a href="{{ url_for('login') }}">Login</a>
         <a href="{{ url_for('signup') }}">Sign Up</a>
       {% endif %}
+      <button id="mode-toggle" onclick="toggleMode()">Light</button>
     </div>
   </nav>
+
+  <script>
+    function toggleMode() {
+      document.body.classList.toggle('light');
+      const isLight = document.body.classList.contains('light');
+      localStorage.setItem('theme', isLight ? 'light' : 'dark');
+      document.getElementById('mode-toggle').textContent = isLight ? 'Dark' : 'Light';
+    }
+    if (localStorage.getItem('theme') === 'light') {
+      document.body.classList.add('light');
+      document.getElementById('mode-toggle').textContent = 'Dark';
+    }
+  </script>
 
   {% with messages = get_flashed_messages() %}
     {% if messages %}

@@ -9,7 +9,7 @@
   </div>
 
   {% if spaces %}
-    <div class="card-grid">
+    <div>
       {% for space in spaces %}
         <div class="card">
           <h3><a href="{{ url_for('space_detail', space_id=space._id) }}">{{ space.name }}</a></h3>
